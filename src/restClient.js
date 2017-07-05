@@ -84,11 +84,23 @@ export default (parseConfig, httpClient = fetchJson) => {
 			const perPage = (params.pagination && params.pagination.perPage != null) ? params.pagination.perPage : 10;
 			const field = (params.sort && params.sort.field != null) ? params.sort.field : "createdAt";
 			const order = (params.sort && params.sort.order != null) ? params.sort.order : "ASC";
+          const parts = params.target.split("\.");
+          var condition;
+          if (parts.length == 2) {
+              const pointer = { "__type": "Pointer"
+                              , "className": parts[1]
+                              , "objectId": params.id
+                              };
+              const val = params.targetPointerClass ? pointer : params.id;
+              condition = { [parts[0]]: pointer};
+	        } else {
+              condition = {[params.target]: params.id};
+          }
 	        const query = {
 	            order: (order === "DESC" ? "-"+field : field),
-		        limit: perPage,
-		        skip: (page - 1) * perPage,
-		        where: JSON.stringify({[params.target] : params.id}),
+		          limit: perPage,
+		          skip: (page - 1) * perPage,
+		          where: JSON.stringify(condition),
 	        };
 	        url = `${parseConfig.URL}/classes/${resource}?${queryParameters(query)}`;
 	        break;
